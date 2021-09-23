@@ -1,0 +1,18 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    plugins {
+        id "${quarkusPluginId}" version "${quarkusPluginVersion}"
+    }
+}
+rootProject.name='quarkus-junit-extension'
+include 'junit-extension'
+include 'fixtures-project'
+include 'main-project'
+
+for (project in rootProject.children) {
+    project.projectDir = file("subprojects/${project.name}")
+}
+

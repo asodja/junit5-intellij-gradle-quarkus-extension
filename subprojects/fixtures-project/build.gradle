@@ -1,0 +1,21 @@
+plugins {
+    id 'java'
+    id 'java-test-fixtures'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+group 'org.acme'
+version '1.0.0-SNAPSHOT'
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
