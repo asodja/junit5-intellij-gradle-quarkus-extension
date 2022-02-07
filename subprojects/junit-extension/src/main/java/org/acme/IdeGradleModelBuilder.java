@@ -7,9 +7,11 @@ import io.quarkus.bootstrap.model.PathsCollection;
 import io.quarkus.bootstrap.resolver.AppModelResolverException;
 import io.quarkus.bootstrap.util.BootstrapUtils;
 import io.quarkus.bootstrap.utils.BuildToolHelper;
-import io.quarkus.bootstrap.workspace.DefaultProcessedSources;
+import io.quarkus.bootstrap.workspace.ArtifactSources;
+import io.quarkus.bootstrap.workspace.DefaultArtifactSources;
+import io.quarkus.bootstrap.workspace.DefaultSourceDir;
 import io.quarkus.bootstrap.workspace.DefaultWorkspaceModule;
-import io.quarkus.bootstrap.workspace.ProcessedSources;
+import io.quarkus.bootstrap.workspace.SourceDir;
 import io.quarkus.bootstrap.workspace.WorkspaceModule;
 import io.quarkus.maven.dependency.ResolvedDependency;
 import io.quarkus.maven.dependency.ResolvedDependencyBuilder;
@@ -22,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -66,7 +69,7 @@ public class IdeGradleModelBuilder {
 
     private static final String INTELLIJ_MODEL_PREFIX = "my.quarkus-test-model";
     private static final long INTELLIJ_MODEL_MAX_AGE_MS = TimeUnit.DAYS.toMillis(14);
-    private static final String MODEL_VERSION = "2.6.x";
+    private static final String MODEL_VERSION = "2.7.x";
 
     public boolean isRunFromIdea(Path path) {
         return path.endsWith("out" + File.separator + "production" + File.separator + "classes");
@@ -156,17 +159,24 @@ public class IdeGradleModelBuilder {
 
     private WorkspaceModule rewriteModule(WorkspaceModule m) {
         DefaultWorkspaceModule newModule = new DefaultWorkspaceModule(m.getId(), m.getModuleDir(), new File(m.getModuleDir() + File.separator + "out"));
-        m.getMainSources().forEach(it -> newModule.addMainSources(rewriteProcessedSource(it)));
-        m.getMainResources().forEach(it -> newModule.addMainResources(rewriteProcessedSource(it)));
-        m.getTestSources().forEach(it -> newModule.addTestSources(rewriteProcessedSource(it)));
-        m.getTestResources().forEach(it -> newModule.addTestResources(rewriteProcessedSource(it)));
+        m.getSourceClassifiers().forEach(it -> {
+            ArtifactSources source = m.getSources(it);
+            newModule.addArtifactSources(new DefaultArtifactSources(
+                    source.getClassifier(),
+                    rewriteSources(source.getSourceDirs()),
+                    rewriteSources(source.getResourceDirs())
+            ));
+        });
+        newModule.setDirectDependencies(new ArrayList<>(m.getDirectDependencies()));
+        newModule.setDirectDependencyConstraints(new ArrayList<>(m.getDirectDependencyConstraints()));
         newModule.setBuildFiles(m.getBuildFiles());
         return newModule;
     }
 
-    private ProcessedSources rewriteProcessedSource(ProcessedSources source) {
-        File destinationDir = rewritePath(source.getDestinationDir().toPath()).toFile();
-        return new DefaultProcessedSources(source.getSourceDir(), destinationDir);
+    private Collection<SourceDir> rewriteSources(Collection<SourceDir> sources) {
+        return sources.stream()
+                .map(it -> new DefaultSourceDir(rewritePath(it.getDir()).toFile(), rewritePath(it.getOutputDir()).toFile()))
+                .collect(Collectors.toList());
     }
 
     private Path rewritePath(Path path) {
