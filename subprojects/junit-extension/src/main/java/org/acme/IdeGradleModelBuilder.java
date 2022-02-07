@@ -104,12 +104,9 @@ public class IdeGradleModelBuilder {
         // BuildToolHelper calls Gradle and collects all dependencies
         ApplicationModel model = BuildToolHelper.enableGradleAppModel(projectRoot, "TEST", Collections.emptyList(), "dependencies");
         // Change all paths of dependency modules from Gradle to IntelliJ paths
-        // First current module
+        // First rewrite current module
         ResolvedDependency currentModule = rewriteCurrentModule(model);
-        // Then all dependency modules
-        List<WorkspaceModule> workspaceModules = model.getWorkspaceModules().stream()
-                .map(this::rewriteModule)
-                .collect(Collectors.toList());
+        // Then rewrite dependencies
         // Gradle returns app dependencies as jars. So for example every module is referenced as jar.
         // But we want that it uses out/ folder (where IntelliJ compiles classes). So here for dependencies
         // that are modules we replace Jar references to module references, so to out/production/classes, out/production/resources
@@ -131,7 +128,6 @@ public class IdeGradleModelBuilder {
         model.getLowerPriorityArtifacts().forEach(builder::addLesserPriorityArtifact);
         model.getRunnerParentFirst().forEach(builder::addRunnerParentFirstArtifact);
         model.getReloadableWorkspaceDependencies().forEach(builder::addReloadableWorkspaceModule);
-        workspaceModules.forEach(it -> builder.getOrCreateProjectModule(it.getId(), it.getModuleDir(), it.getBuildDir()));
         return builder.build();
     }
 
@@ -157,19 +153,19 @@ public class IdeGradleModelBuilder {
                 .build();
     }
 
-    private WorkspaceModule rewriteModule(WorkspaceModule m) {
-        DefaultWorkspaceModule newModule = new DefaultWorkspaceModule(m.getId(), m.getModuleDir(), new File(m.getModuleDir() + File.separator + "out"));
-        m.getSourceClassifiers().forEach(it -> {
-            ArtifactSources source = m.getSources(it);
+    private WorkspaceModule rewriteModule(WorkspaceModule original) {
+        DefaultWorkspaceModule newModule = new DefaultWorkspaceModule(original.getId(), original.getModuleDir(), new File(original.getModuleDir() + File.separator + "out"));
+        original.getSourceClassifiers().forEach(it -> {
+            ArtifactSources source = original.getSources(it);
             newModule.addArtifactSources(new DefaultArtifactSources(
                     source.getClassifier(),
                     rewriteSources(source.getSourceDirs()),
                     rewriteSources(source.getResourceDirs())
             ));
         });
-        newModule.setDirectDependencies(new ArrayList<>(m.getDirectDependencies()));
-        newModule.setDirectDependencyConstraints(new ArrayList<>(m.getDirectDependencyConstraints()));
-        newModule.setBuildFiles(m.getBuildFiles());
+        newModule.setDirectDependencies(new ArrayList<>(original.getDirectDependencies()));
+        newModule.setDirectDependencyConstraints(new ArrayList<>(original.getDirectDependencyConstraints()));
+        newModule.setBuildFiles(original.getBuildFiles());
         return newModule;
     }
 
