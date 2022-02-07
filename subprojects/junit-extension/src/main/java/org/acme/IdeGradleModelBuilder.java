@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * This class modifies Quarkus Model.
@@ -103,10 +102,6 @@ public class IdeGradleModelBuilder {
         // Change all paths of dependency modules from Gradle to IntelliJ paths
         // First current module
         ResolvedDependency currentModule = rewriteCurrentModule(model);
-        // Then all dependency modules
-        List<WorkspaceModule> workspaceModules = model.getWorkspaceModules().stream()
-                .map(this::rewriteModule)
-                .collect(Collectors.toList());
         // Gradle returns app dependencies as jars. So for example every module is referenced as jar.
         // But we want that it uses out/ folder (where IntelliJ compiles classes). So here for dependencies
         // that are modules we replace Jar references to module references, so to out/production/classes, out/production/resources
@@ -128,7 +123,6 @@ public class IdeGradleModelBuilder {
         model.getLowerPriorityArtifacts().forEach(builder::addLesserPriorityArtifact);
         model.getRunnerParentFirst().forEach(builder::addRunnerParentFirstArtifact);
         model.getReloadableWorkspaceDependencies().forEach(builder::addReloadableWorkspaceModule);
-        workspaceModules.forEach(it -> builder.getOrCreateProjectModule(it.getId(), it.getModuleDir(), it.getBuildDir()));
         return builder.build();
     }
 
