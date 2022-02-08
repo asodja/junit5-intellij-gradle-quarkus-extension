@@ -13,6 +13,7 @@ import io.quarkus.bootstrap.workspace.ProcessedSources;
 import io.quarkus.bootstrap.workspace.WorkspaceModule;
 import io.quarkus.maven.dependency.ResolvedDependency;
 import io.quarkus.maven.dependency.ResolvedDependencyBuilder;
+import io.quarkus.paths.PathCollection;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -97,11 +99,13 @@ public class IdeGradleModelBuilder {
     }
 
     private ApplicationModel buildModel(Path projectRoot) throws IOException, AppModelResolverException {
-        // BuildToolHelper calls Gradle and collects all dependencies
+        // BuildToolHelper calls Gradle and collects all dependencies. We also call gradle built-in task `dependencies`
+        // that resolves all classpaths, since ApplicationModel requires resolved classpaths.
         ApplicationModel model = BuildToolHelper.enableGradleAppModel(projectRoot, "TEST", Collections.emptyList(), "dependencies");
         // Change all paths of dependency modules from Gradle to IntelliJ paths
-        // First current module
+        // First rewrite current module
         ResolvedDependency currentModule = rewriteCurrentModule(model);
+        // Then rewrite dependencies
         // Gradle returns app dependencies as jars. So for example every module is referenced as jar.
         // But we want that it uses out/ folder (where IntelliJ compiles classes). So here for dependencies
         // that are modules we replace Jar references to module references, so to out/production/classes, out/production/resources
@@ -134,10 +138,11 @@ public class IdeGradleModelBuilder {
         WorkspaceModule module = dependency.getWorkspaceModule() != null
                 ? rewriteModule(dependency.getWorkspaceModule())
                 : null;
-        List<Path> paths = new ArrayList<>();
-        dependency.getResolvedPaths().forEach(it -> paths.add(rewritePath(it)));
+        PathCollection resolvedPaths = module == null
+                ? dependency.getResolvedPaths()
+                : collectCompiledPaths(module, dependency);
         return ResolvedDependencyBuilder.newInstance()
-                .setResolvedPaths(PathsCollection.from(paths))
+                .setResolvedPaths(resolvedPaths)
                 .setGroupId(dependency.getGroupId())
                 .setArtifactId(dependency.getArtifactId())
                 .setClassifier(dependency.getClassifier())
@@ -146,6 +151,23 @@ public class IdeGradleModelBuilder {
                 .setFlags(dependency.getFlags())
                 .setWorkspaceModule(module)
                 .build();
+    }
+
+    private PathCollection collectCompiledPaths(WorkspaceModule module, ResolvedDependency dependency) {
+        PathsCollection.Builder paths = PathsCollection.builder();
+        Collection<ProcessedSources> classes = module.getMainSources();
+        Collection<ProcessedSources> resources = module.getMainResources();
+        if ("test-fixtures".equals(dependency.getClassifier())) {
+            classes = module.getTestSources();
+            resources = module.getTestResources();
+        }
+        classes.stream()
+                .filter(it -> it.getDestinationDir().exists())
+                .forEach(it -> paths.add(it.getDestinationDir().toPath()));
+        resources.stream()
+                .filter(it -> it.getDestinationDir().exists())
+                .forEach(it -> paths.add(it.getDestinationDir().toPath()));
+        return paths.build();
     }
 
     private WorkspaceModule rewriteModule(WorkspaceModule m) {
