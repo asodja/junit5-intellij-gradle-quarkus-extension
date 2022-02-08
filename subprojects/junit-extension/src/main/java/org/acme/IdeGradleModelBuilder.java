@@ -1,5 +1,6 @@
 package org.acme;
 
+import com.google.common.collect.ImmutableMap;
 import io.quarkus.bootstrap.BootstrapConstants;
 import io.quarkus.bootstrap.model.ApplicationModel;
 import io.quarkus.bootstrap.model.ApplicationModelBuilder;
@@ -15,6 +16,7 @@ import io.quarkus.bootstrap.workspace.SourceDir;
 import io.quarkus.bootstrap.workspace.WorkspaceModule;
 import io.quarkus.maven.dependency.ResolvedDependency;
 import io.quarkus.maven.dependency.ResolvedDependencyBuilder;
+import io.quarkus.paths.PathCollection;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +57,7 @@ public class IdeGradleModelBuilder {
     private static final String GRADLE_TEST_RESOURCES = "build" + File.separator + "resources" + File.separator + "test";
     private static final String GRADLE_TEST_FIXTURES_RESOURCES = "build" + File.separator + "resources" + File.separator + "testFixtures";
 
+    private static final Map<Object, Object> SOURCE_DIR_DATA = ImmutableMap.of("compiler", "compileJava");
     private static final Map<String, String> CLASSES_MAPPING;
     static {
         CLASSES_MAPPING = new LinkedHashMap<>();
@@ -101,7 +104,8 @@ public class IdeGradleModelBuilder {
     }
 
     private ApplicationModel buildModel(Path projectRoot) throws IOException, AppModelResolverException {
-        // BuildToolHelper calls Gradle and collects all dependencies
+        // BuildToolHelper calls Gradle and collects all dependencies. We also call gradle built-in task `dependencies`
+        // that resolves all classpaths, since ApplicationModel requires resolved classpaths.
         ApplicationModel model = BuildToolHelper.enableGradleAppModel(projectRoot, "TEST", Collections.emptyList(), "dependencies");
         // Change all paths of dependency modules from Gradle to IntelliJ paths
         // First rewrite current module
@@ -139,10 +143,11 @@ public class IdeGradleModelBuilder {
         WorkspaceModule module = dependency.getWorkspaceModule() != null
                 ? rewriteModule(dependency.getWorkspaceModule())
                 : null;
-        List<Path> paths = new ArrayList<>();
-        dependency.getResolvedPaths().forEach(it -> paths.add(rewritePath(it)));
+        PathCollection resolvedPaths = module == null
+                ? dependency.getResolvedPaths()
+                : collectCompiledPaths(module, dependency);
         return ResolvedDependencyBuilder.newInstance()
-                .setResolvedPaths(PathsCollection.from(paths))
+                .setResolvedPaths(resolvedPaths)
                 .setGroupId(dependency.getGroupId())
                 .setArtifactId(dependency.getArtifactId())
                 .setClassifier(dependency.getClassifier())
@@ -151,6 +156,20 @@ public class IdeGradleModelBuilder {
                 .setFlags(dependency.getFlags())
                 .setWorkspaceModule(module)
                 .build();
+    }
+
+    private PathCollection collectCompiledPaths(WorkspaceModule module, ResolvedDependency dependency) {
+        ArtifactSources sources = module.getSources(dependency.getClassifier());
+        PathsCollection.Builder paths = PathsCollection.builder();
+        if (sources != null) {
+            sources.getSourceDirs().stream()
+                    .filter(SourceDir::isOutputAvailable)
+                    .forEach(it -> paths.add(it.getOutputDir()));
+            sources.getResourceDirs().stream()
+                    .filter(SourceDir::isOutputAvailable)
+                    .forEach(it -> paths.add(it.getOutputDir()));
+        }
+        return paths.build();
     }
 
     private WorkspaceModule rewriteModule(WorkspaceModule original) {
@@ -170,8 +189,9 @@ public class IdeGradleModelBuilder {
     }
 
     private Collection<SourceDir> rewriteSources(Collection<SourceDir> sources) {
+        // SOURCE_DIR_DATA is never used, but let's set it anyway just for the sake of completeness
         return sources.stream()
-                .map(it -> new DefaultSourceDir(rewritePath(it.getDir()).toFile(), rewritePath(it.getOutputDir()).toFile()))
+                .map(it -> new DefaultSourceDir(it.getDir().toFile(), rewritePath(it.getOutputDir()).toFile(), SOURCE_DIR_DATA))
                 .collect(Collectors.toList());
     }
 
