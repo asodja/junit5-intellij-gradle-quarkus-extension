@@ -182,8 +182,12 @@ public class IdeGradleModelBuilder {
                     rewriteSources(source.getResourceDirs())
             ));
         });
-        newModule.setDirectDependencies(new ArrayList<>(original.getDirectDependencies()));
-        newModule.setDirectDependencyConstraints(new ArrayList<>(original.getDirectDependencyConstraints()));
+        if (original.getDirectDependencies() != null) {
+            newModule.setDirectDependencies(new ArrayList<>(original.getDirectDependencies()));
+        }
+        if (original.getDirectDependencyConstraints() != null) {
+            newModule.setDirectDependencyConstraints(new ArrayList<>(original.getDirectDependencyConstraints()));
+        }
         newModule.setBuildFiles(original.getBuildFiles());
         return newModule;
     }
@@ -191,7 +195,7 @@ public class IdeGradleModelBuilder {
     private Collection<SourceDir> rewriteSources(Collection<SourceDir> sources) {
         // SOURCE_DIR_DATA is never used, but let's set it anyway just for the sake of completeness
         return sources.stream()
-                .map(it -> new DefaultSourceDir(it.getDir().toFile(), rewritePath(it.getOutputDir()).toFile(), SOURCE_DIR_DATA))
+                .map(it -> new DefaultSourceDir(it.getDir(), rewritePath(it.getOutputDir()), SOURCE_DIR_DATA))
                 .collect(Collectors.toList());
     }
 
