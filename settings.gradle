@@ -8,11 +8,27 @@ pluginManagement {
     }
 }
 rootProject.name='quarkus-junit-extension'
-include 'junit-extension'
-include 'fixtures-project'
-include 'main-project'
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+void productionProjects(String... names) {
+    for (String name in names) {
+        include(name)
+        project(":$name").projectDir = file("projects/$name")
+    }
 }
 
+void testProjects(String... names) {
+    for (String name in names) {
+        include(name)
+        project(":$name").projectDir = file("test-projects/$name")
+    }
+}
+
+productionProjects(
+        'junit-extension'
+)
+testProjects(
+        'java-fixtures',
+        'java-project',
+        'kotlin-project',
+        'kotlin-library'
+)

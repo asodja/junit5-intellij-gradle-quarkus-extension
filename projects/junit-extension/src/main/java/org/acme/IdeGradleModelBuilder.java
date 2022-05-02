@@ -42,31 +42,34 @@ import java.util.stream.Collectors;
  */
 public class IdeGradleModelBuilder {
 
-    private static final String INTELLIJ_MAIN_CLASSES = "out" + File.separator + "production" + File.separator + "classes";
-    private static final String INTELLIJ_TEST_CLASSES = "out" + File.separator + "test" + File.separator + "classes";
-    private static final String INTELLIJ_FIXTURES_CLASSES = "out" + File.separator + "testFixtures" + File.separator + "classes";
+    private static final String INTELLIJ_MAIN_CLASSES = "out/production/classes".replaceAll("/", File.separator);
+    private static final String INTELLIJ_TEST_CLASSES = "out/test/classes".replaceAll("/", File.separator);
+    private static final String INTELLIJ_FIXTURES_CLASSES = "out/testFixtures/classes".replaceAll("/", File.separator);
     // We use src/main/resources for IntelliJ since sometimes it doesn't copy resources to out/production/resources
-    private static final String INTELLIJ_MAIN_RESOURCES = "src" + File.separator + "main" + File.separator + "resources";
-    private static final String INTELLIJ_TEST_RESOURCES = "src" + File.separator + "test" + File.separator + "resources";
-    private static final String INTELLIJ_FIXTURES_RESOURCES = "src" + File.separator + "testFixtures" + File.separator + "resources";
+    private static final String INTELLIJ_MAIN_RESOURCES = "src/main/resources".replaceAll("/", File.separator);
+    private static final String INTELLIJ_TEST_RESOURCES = "src/test/resources".replaceAll("/", File.separator);
+    private static final String INTELLIJ_FIXTURES_RESOURCES = "src/testFixtures/resources".replaceAll("/", File.separator);
 
-    private static final String GRADLE_MAIN_CLASSES = "build" + File.separator + "classes" + File.separator + "java" + File.separator + "main";
-    private static final String GRADLE_TEST_CLASSES = "build" + File.separator + "classes" + File.separator + "java" + File.separator + "test";
-    private static final String GRADLE_TEST_FIXTURES_CLASSES = "build" + File.separator + "classes" + File.separator + "java" + File.separator + "testFixtures";
-    private static final String GRADLE_MAIN_RESOURCES = "build" + File.separator + "resources" + File.separator + "main";
-    private static final String GRADLE_TEST_RESOURCES = "build" + File.separator + "resources" + File.separator + "test";
-    private static final String GRADLE_TEST_FIXTURES_RESOURCES = "build" + File.separator + "resources" + File.separator + "testFixtures";
+    private static final String GRADLE_MAIN_CLASSES = "build/classes/java/main".replaceAll("/", File.separator);
+    private static final String GRADLE_TEST_CLASSES = "build/classes/java/test".replaceAll("/", File.separator);
+    private static final String GRADLE_TEST_FIXTURES_CLASSES = "build/classes/java/testFixtures".replaceAll("/", File.separator);
+    private static final String GRADLE_MAIN_RESOURCES = "build/resources/main".replaceAll("/", File.separator);
+    private static final String GRADLE_TEST_RESOURCES = "build/resources/test".replaceAll("/", File.separator);
+    private static final String GRADLE_TEST_FIXTURES_RESOURCES = "build/resources/testFixtures".replaceAll("/", File.separator);
 
     private static final Map<Object, Object> SOURCE_DIR_DATA = ImmutableMap.of("compiler", "compileJava");
     private static final Map<String, String> CLASSES_MAPPING;
     static {
         CLASSES_MAPPING = new LinkedHashMap<>();
         CLASSES_MAPPING.put(GRADLE_MAIN_CLASSES, INTELLIJ_MAIN_CLASSES);
+        CLASSES_MAPPING.put(GRADLE_MAIN_CLASSES.replace("java", "kotlin"), INTELLIJ_MAIN_CLASSES);
         CLASSES_MAPPING.put(GRADLE_MAIN_RESOURCES, INTELLIJ_MAIN_RESOURCES);
         // test-fixtures must be before test otherwise replace will first grab test for build/classes/java/testFixtures
         CLASSES_MAPPING.put(GRADLE_TEST_FIXTURES_CLASSES, INTELLIJ_FIXTURES_CLASSES);
+        CLASSES_MAPPING.put(GRADLE_TEST_FIXTURES_CLASSES.replace("java", "kotlin"), INTELLIJ_FIXTURES_CLASSES);
         CLASSES_MAPPING.put(GRADLE_TEST_FIXTURES_RESOURCES, INTELLIJ_FIXTURES_RESOURCES);
         CLASSES_MAPPING.put(GRADLE_TEST_CLASSES, INTELLIJ_TEST_CLASSES);
+        CLASSES_MAPPING.put(GRADLE_TEST_CLASSES.replace("java", "kotlin"), INTELLIJ_TEST_CLASSES);
         CLASSES_MAPPING.put(GRADLE_TEST_RESOURCES, INTELLIJ_TEST_RESOURCES);
     }
 
