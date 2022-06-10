@@ -75,7 +75,7 @@ public class IdeGradleModelBuilder {
 
     private static final String INTELLIJ_MODEL_PREFIX = "my.quarkus-test-model";
     private static final long INTELLIJ_MODEL_MAX_AGE_MS = TimeUnit.DAYS.toMillis(14);
-    private static final String MODEL_VERSION = "2.7.x";
+    private static final String MODEL_VERSION = "2.10.x";
 
     public boolean isRunFromIdea(Path path) {
         return path.endsWith("out" + File.separator + "production" + File.separator + "classes");
@@ -176,7 +176,10 @@ public class IdeGradleModelBuilder {
     }
 
     private WorkspaceModule rewriteModule(WorkspaceModule original) {
-        DefaultWorkspaceModule newModule = new DefaultWorkspaceModule(original.getId(), original.getModuleDir(), new File(original.getModuleDir() + File.separator + "out"));
+        WorkspaceModule.Mutable newModule = WorkspaceModule.builder()
+                .setModuleId(original.getId())
+                .setModuleDir(original.getModuleDir().toPath())
+                .setBuildDir(new File(original.getModuleDir(), "out").toPath());
         original.getSourceClassifiers().forEach(it -> {
             ArtifactSources source = original.getSources(it);
             newModule.addArtifactSources(new DefaultArtifactSources(
@@ -186,12 +189,20 @@ public class IdeGradleModelBuilder {
             ));
         });
         if (original.getDirectDependencies() != null) {
-            newModule.setDirectDependencies(new ArrayList<>(original.getDirectDependencies()));
+            newModule.setDependencies(new ArrayList<>(original.getDirectDependencies()));
         }
         if (original.getDirectDependencyConstraints() != null) {
-            newModule.setDirectDependencyConstraints(new ArrayList<>(original.getDirectDependencyConstraints()));
+            newModule.setDependencyConstraints(new ArrayList<>(original.getDirectDependencyConstraints()));
         }
-        newModule.setBuildFiles(original.getBuildFiles());
+        if (original.getTestClasspathDependencyExclusions() != null) {
+            newModule.setTestClasspathDependencyExclusions(new ArrayList<>(original.getTestClasspathDependencyExclusions()));
+        }
+        if (original.getAdditionalTestClasspathElements() != null) {
+            newModule.setAdditionalTestClasspathElements(new ArrayList<>(original.getAdditionalTestClasspathElements()));
+        }
+        if (!original.getBuildFiles().isEmpty()) {
+            newModule.setBuildFile(original.getBuildFiles().getSinglePath());
+        }
         return newModule;
     }
 

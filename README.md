@@ -2,7 +2,9 @@
 
 Experimental Junit extension that makes Quarkus run fast when using Gradle project with JUnit also with IntelliJ runner.
 
-On the `main` branch is version compatible with Quarkus `2.7.2`.
+On the `main` branch is version compatible with Quarkus `2.10.0.CR1`.
+
+For Quarkus `2.9.x` to `2.7.2` compatible extension is in `2.9.x` branch.
 
 For Quarkus `2.7.1` and `2.7.0` compatible extension is in `2.7.1` branch.
 
