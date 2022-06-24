@@ -1,5 +1,5 @@
 plugins {
-    id 'java'
+    id 'java-library'
     id 'maven-publish'
 }
 
@@ -14,11 +14,11 @@ dependencies {
 }
 
 group 'io.github.asodja'
-version '1.0.0-SNAPSHOT'
+version '2.0.0-alpha01'
 
 compileJava {
     options.encoding = 'UTF-8'
-    options.compilerArgs << '-parameters'
+    options.compilerArgs.add('-parameters')
 }
 
 compileTestJava {
@@ -26,16 +26,39 @@ compileTestJava {
 }
 
 java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
     withSourcesJar()
     withJavadocJar()
 }
 
 publishing {
+    repositories {
+        maven {
+            url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            credentials {
+                username = System.getenv("MAVEN_CENTRAL_USERNAME")
+                password = System.getenv("MAVEN_CENTRAL_PASSWORD")
+            }
+        }
+    }
     publications {
         maven(MavenPublication) {
             from components.java
             groupId = "io.github.asodja"
             artifactId = "junit5-intellij-gradle-quarkus-extension"
+            pom {
+                description = "Junit5 extension that makes Quarkus run fast when using Gradle project with IntelliJ runner."
+                url = "https://github.com/asodja/junit5-intellij-gradle-quarkus-extension"
+                packaging = "jar"
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "http://www.opensource.org/licenses/mit-license.php"
+                    }
+                }
+            }
         }
     }
 }
