@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id 'signing'
 }
 
 repositories {
@@ -13,8 +14,8 @@ dependencies {
     compileOnly("io.quarkus:quarkus-junit5")
 }
 
-group 'io.github.asodja'
-version '2.0.0-alpha01'
+group = 'io.github.asodja'
+version = '2.0.0-alpha01'
 
 compileJava {
     options.encoding = 'UTF-8'
@@ -33,10 +34,20 @@ java {
     withJavadocJar()
 }
 
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
+}
+
+tasks.withType(Sign) {
+    onlyIf { !version.endsWith("-SNAPSHOT") }
+}
+
 publishing {
     repositories {
         maven {
-            url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            url = version.endsWith("-SNAPSHOT")
+                    ? "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                    : "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
             credentials {
                 username = System.getenv("MAVEN_CENTRAL_USERNAME")
                 password = System.getenv("MAVEN_CENTRAL_PASSWORD")
@@ -51,14 +62,31 @@ publishing {
             pom {
                 description = "Junit5 extension that makes Quarkus run fast when using Gradle project with IntelliJ runner."
                 url = "https://github.com/asodja/junit5-intellij-gradle-quarkus-extension"
-                packaging = "jar"
+                name = "junit5-intellij-gradle-quarkus-extension"
                 licenses {
                     license {
                         name = "MIT License"
                         url = "http://www.opensource.org/licenses/mit-license.php"
                     }
                 }
+                developers {
+                    developer {
+                        name = "Anže Sodja"
+                        url = "https://github.com/asodja"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git://github.com/asodja/junit5-intellij-gradle-quarkus-extension.git"
+                    developerConnection = "scm:git:ssh://github.com:asodja/junit5-intellij-gradle-quarkus-extension.git"
+                    url = "https://github.com/asodja/junit5-intellij-gradle-quarkus-extension"
+                }
             }
         }
+    }
+}
+
+afterEvaluate {
+    signing {
+        sign publishing.publications.maven
     }
 }
