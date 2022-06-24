@@ -17,7 +17,7 @@ dependencies {
     implementation 'io.quarkus:quarkus-arc'
     implementation 'io.quarkus:quarkus-resteasy'
     implementation(project(":kotlin-library"))
-    testImplementation(project(":junit-extension"))
+    testImplementation(project(":junit5-extension"))
     testImplementation(testFixtures(project(":java-fixtures")))
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'

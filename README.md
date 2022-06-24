@@ -10,6 +10,8 @@ For Quarkus `2.7.1` and `2.7.0` compatible extension is in `2.7.1` branch.
 
 For Quarkus `2.6.x` and `2.5.x` compatible extension is in `2.6.x` branch.
 
+Extension is located in projects/junit5-extension
+
 ## Usage
 ```
 // IntelliJGradleQuarkusTestExtension must be used applied before @QuarkusTest 

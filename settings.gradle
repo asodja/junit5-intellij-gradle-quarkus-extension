@@ -24,7 +24,7 @@ void testProjects(String... names) {
 }
 
 productionProjects(
-        'junit-extension'
+        'junit5-extension'
 )
 testProjects(
         'java-fixtures',
