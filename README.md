@@ -6,8 +6,7 @@ Table of compatible versions
 | Extension version | Quarkus version |
 |  :---: |  :---:  |
 | 2.0.0-alpha01 | 2.10.0 |
-| 1.0.0-alpha01 | TBD |
-
+| 1.0.0-alpha01 | 2.7.2-2.9.x |
 
 ## Usage
 
@@ -48,4 +47,4 @@ public class GreetingResourceTest extends MyBaseTest {
 ### Usage inside the IntelliJ IDEA
 After you update the project dependencies click IntelliJ IDEA button "Load Gradle changes" or "Reload All Gradle projects". After that you can run Unit tests. Extension will automatically detect classpath changes, and it will update Quarkus App model via Gradle and cache it. On the next run, extension will use cached Quarkus App model, and it will run much faster.
 
-In case changes are not detected, you can manually delete model in `out/my.quarkus-test-model-*.dat` and extension will rebuild model again.
+In case changes are not detected, you can manually delete model in `out/my.quarkus-test-model-*.dat` and extension will rebuild model again. On macOS or Linux you can also use something like `find . -name "my.quarkus-test-model*.dat" | xargs rm` to delete all models files at once.
