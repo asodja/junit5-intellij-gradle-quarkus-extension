@@ -5,8 +5,8 @@ JUnit5 extension that makes Quarkus JUnit5 tests run fast for Gradle project whe
 Table of compatible versions
 | Extension version | Quarkus version |
 |  :---: |  :---:  |
-| 2.0.0.alpha01 | 2.10.0 |
-| 1.0.0.alpha01 | TBD |
+| 2.0.0-alpha01 | 2.10.0 |
+| 1.0.0-alpha01 | TBD |
 
 
 ## Usage
@@ -18,9 +18,9 @@ repositories {
 }
 
 dependencies {
-    // Quarkus dependencies has to be defined manually by the user
+    // Quarkus JUnit5 dependency has to be defined manually by the user
     testImplementation("io.quarkus:quarkus-junit5:2.10.0.Final")
-    testImplementation("io.github.asodja:junit5-intellij-gradle-quarkus-extension:2.0.0.alpha01")
+    testImplementation("io.github.asodja:junit5-intellij-gradle-quarkus-extension:2.0.0-alpha01")
 }
 ```
 
