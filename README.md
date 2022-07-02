@@ -5,7 +5,7 @@ JUnit5 extension that makes Quarkus JUnit5 tests run fast for Gradle project whe
 Table of compatible versions
 | Extension version | Quarkus version |
 |  :---: |  :---:  |
-| 2.0.0-alpha01 | 2.10.0 |
+| 2.0.0-alpha01 | 2.10.x |
 | 1.0.0-alpha01 | 2.7.2-2.9.x |
 
 ## Usage
