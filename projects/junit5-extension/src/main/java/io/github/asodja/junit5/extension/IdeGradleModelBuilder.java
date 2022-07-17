@@ -75,7 +75,7 @@ public class IdeGradleModelBuilder {
 
     private static final String INTELLIJ_MODEL_PREFIX = "my.quarkus-test-model";
     private static final long INTELLIJ_MODEL_MAX_AGE_MS = TimeUnit.DAYS.toMillis(14);
-    private static final String MODEL_VERSION = "2.10.x";
+    private static final String MODEL_VERSION = "2.11.x";
 
     public boolean isRunFromIdea(Path path) {
         return path.endsWith("out" + File.separator + "production" + File.separator + "classes");
@@ -118,14 +118,9 @@ public class IdeGradleModelBuilder {
         // But we want that it uses out/ folder (where IntelliJ compiles classes). So here for dependencies
         // that are modules we replace Jar references to module references, so to out/production/classes, out/production/resources
         // out/test/classes, out/test/resources, out/testFixtures/classes, out/testFixtures/resources
-        String projectGroupId = currentModule.getGroupId();
-        List<ResolvedDependency> dependencies = new ArrayList<>();
-        for (ResolvedDependency dependency : model.getDependencies()) {
-            if (isThisAnotherModule(projectGroupId, dependency)) {
-                dependency = rewriteDependency(dependency);
-            }
-            dependencies.add(dependency);
-        }
+        List<ResolvedDependencyBuilder> dependencies = model.getDependencies().stream()
+                .map(this::rewriteDependency)
+                .collect(Collectors.toList());
         ApplicationModelBuilder builder = new ApplicationModelBuilder()
                 .addDependencies(dependencies)
                 .setAppArtifact(currentModule)
@@ -135,14 +130,15 @@ public class IdeGradleModelBuilder {
         model.getLowerPriorityArtifacts().forEach(builder::addLesserPriorityArtifact);
         model.getRunnerParentFirst().forEach(builder::addRunnerParentFirstArtifact);
         model.getReloadableWorkspaceDependencies().forEach(builder::addReloadableWorkspaceModule);
+        model.getRemovedResources().forEach(builder::addRemovedResources);
         return builder.build();
     }
 
     private ResolvedDependency rewriteCurrentModule(ApplicationModel model) {
-        return rewriteDependency(model.getAppArtifact());
+        return rewriteDependency(model.getAppArtifact()).build();
     }
 
-    private ResolvedDependency rewriteDependency(ResolvedDependency dependency) {
+    private ResolvedDependencyBuilder rewriteDependency(ResolvedDependency dependency) {
         WorkspaceModule module = dependency.getWorkspaceModule() != null
                 ? rewriteModule(dependency.getWorkspaceModule())
                 : null;
@@ -157,8 +153,8 @@ public class IdeGradleModelBuilder {
                 .setVersion(dependency.getVersion())
                 .setScope(dependency.getScope())
                 .setFlags(dependency.getFlags())
-                .setWorkspaceModule(module)
-                .build();
+                .setType(dependency.getType())
+                .setWorkspaceModule(module);
     }
 
     private PathCollection collectCompiledPaths(WorkspaceModule module, ResolvedDependency dependency) {
@@ -221,10 +217,6 @@ public class IdeGradleModelBuilder {
             }
         }
         return path;
-    }
-
-    private boolean isThisAnotherModule(String groupId, ResolvedDependency dependency) {
-        return dependency.getGroupId().equals(groupId) && dependency.getWorkspaceModule() != null;
     }
 
     private void serializeAppModel(ApplicationModel model, String outPath) throws IOException {
