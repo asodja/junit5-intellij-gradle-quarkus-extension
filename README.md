@@ -19,7 +19,7 @@ repositories {
 
 dependencies {
     // Quarkus JUnit5 dependency has to be defined manually by the user
-    testImplementation("io.quarkus:quarkus-junit5:2.11.0.CR1")
+    testImplementation("io.quarkus:quarkus-junit5:2.11.1.Final")
     testImplementation("io.github.asodja:junit5-intellij-gradle-quarkus-extension:3.0.0-alpha01")
 }
 ```
